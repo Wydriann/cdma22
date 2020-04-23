@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 
 import 'client_model.dart';
 import 'database.dart';
 
-void main() => runApp(MaterialApp(
-      home: MyApp(),
-      debugShowCheckedModeBanner: false,
-    ));
+void main() => runApp(
+      MaterialApp(
+        home: MyApp(),
+        debugShowCheckedModeBanner: false,
+      ),
+    );
 
 class MyApp extends StatefulWidget {
   @override
@@ -15,13 +16,8 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  // data for testing
-  List<Cliente> testClients = [
-    Cliente(nome: "Dick", sobrenome: "Vigarista", marcado: false),
-    Cliente(nome: "Penélope", sobrenome: "Charmosa", marcado: true),
-    Cliente(nome: "Medinho", sobrenome: "Beltrano", marcado: false),
-    Cliente(nome: "Muttley", sobrenome: "Siclano", marcado: false),
-  ];
+  static List<Cliente> testClients = [];
+  int _id = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +44,7 @@ class _MyAppState extends State<MyApp> {
                 Cliente item = snapshot.data[index];
                 return Dismissible(
                   key: UniqueKey(),
-                  background: Container(color: Colors.red),
+                  background: Container(color: Colors.green),
                   onDismissed: (direction) {
                     DBProvider.db.deleteCliente(item.id);
                   },
@@ -74,11 +70,70 @@ class _MyAppState extends State<MyApp> {
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () async {
-          Cliente rnd = testClients[math.Random().nextInt(testClients.length)];
-          await DBProvider.db.newCliente(rnd);
+          _addCustomer(context);
           setState(() {});
         },
       ),
     );
+  }
+
+  void _addCustomer(BuildContext context) {
+    String _firstName;
+    String _lastName;
+    Cliente _customer;
+
+    showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Novo Cliente"),
+            actions: <Widget>[
+              FlatButton(
+                onPressed: () async {
+                  _customer = Cliente(
+                    id: ++_id,
+                    nome: _firstName,
+                    sobrenome: _lastName,
+                    marcado: false,
+                  );
+                  await DBProvider.db.newCliente(_customer);
+                  Navigator.of(context).pop();
+                  setState(() => testClients.add(_customer));
+                },
+                child: Text("Incluir"),
+              ),
+              FlatButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text("Cancelar"),
+              )
+            ],
+            content: Column(
+              children: <Widget>[
+                TextField(
+                  // Espaço para digitar com titulo e exemplo
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: "Nome",
+                    hintText: "Digite seu primeiro nome",
+                  ),
+                  onChanged: (value) {
+                    _firstName = value;
+                  },
+                ),
+                TextField(
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: "Sobrenome",
+                    hintText: "Digite seu sobrenome",
+                  ),
+                  onChanged: (value) {
+                    _lastName = value;
+                  },
+                ),
+              ],
+            ),
+          );
+        });
   }
 }
